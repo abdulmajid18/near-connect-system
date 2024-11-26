@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Location</title>
+</head>
+<body>
+<h1>Send Location to WebSocket</h1>
+
+<button id="connectBtn">Connect</button>
+<button id="sendLocationBtn" disabled>Send Location</button>
+
+<p id="status">Status: Not connected</p>
+<p id="locationStatus">Location: Not yet retrieved</p>
+
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
+<script>
+    let socket;
+    let stompClient;
+    const connectBtn = document.getElementById('connectBtn');
+    const sendLocationBtn = document.getElementById('sendLocationBtn');
+    const status = document.getElementById('status');
+    const locationStatus = document.getElementById('locationStatus');
+
+    // Connect button
+    connectBtn.onclick = function() {
+        socket = new WebSocket('ws://localhost:8080/ws');  // WebSocket server URL
+        stompClient = Stomp.over(socket);
+
+        // WebSocket event handlers
+        socket.onopen = function() {
+            console.log("WebSocket connected successfully");
+            status.textContent = 'Status: Connected';  // Update the status once WebSocket is connected
+            connectBtn.disabled = true;
+            sendLocationBtn.disabled = false;
+
+            // Now connect STOMP
+            stompClient.connect({}, function(frame) {
+                console.log("STOMP connection established", frame);
+
+                // Subscribe to the topic where server will send responses (optional for testing)
+                stompClient.subscribe('/topic/locations', function(message) {
+                    console.log('Received locationMessage message: ' + message.body);
+                });
+            }, function(error) {
+                console.error("STOMP connection failed", error);
+            });
+        };
+
+        socket.onerror = function(error) {
+            console.error("WebSocket connection failed", error);
+            status.textContent = 'Status: Connection failed';
+        };
+
+        socket.onclose = function() {
+            console.log("WebSocket connection closed");
+            status.textContent = 'Status: Disconnected';
+        };
+    };
+
+    // Send locationMessage button
+    sendLocationBtn.onclick = function() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(function(position) {
+                // Get latitude and longitude
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+
+                locationStatus.textContent = `Location: Latitude = ${latitude}, Longitude = ${longitude}`;
+
+                // Send locationMessage to the server
+                const locationMessage = {
+                    latitude: latitude,
+                    longitude: longitude
+                };
+
+                stompClient.send("/app/locationMessage", {}, JSON.stringify(locationMessage));
+            }, function(error) {
+                console.error("Error getting locationMessage: " + error.message);
+                locationStatus.textContent = "Location: Error retrieving locationMessage.";
+            });
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    };
+</script>
+</body>
+</html>
