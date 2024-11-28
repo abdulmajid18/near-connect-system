@@ -19,6 +19,7 @@
 <script>
     let socket;
     let stompClient;
+    let locationInterval;
     const connectBtn = document.getElementById('connectBtn');
     const sendLocationBtn = document.getElementById('sendLocationBtn');
     const status = document.getElementById('status');
@@ -42,11 +43,16 @@
 
                 // Subscribe to the topic where server will send responses (optional for testing)
                 stompClient.subscribe('/topic/locations', function(message) {
-                    console.log('Received locationMessage message: ' + message.body);
+                    const receivedLocation = JSON.parse(message.body);
+                    console.log('Received location: ', receivedLocation);
+                    locationStatus.textContent = `Location: Latitude = ${receivedLocation.latitude}, Longitude = ${receivedLocation.longitude}`;
                 });
             }, function(error) {
                 console.error("STOMP connection failed", error);
             });
+
+            // Start sending location every 30 seconds after connection is established
+            locationInterval = setInterval(sendLocation, 30000);  // 30000ms = 30 seconds
         };
 
         socket.onerror = function(error) {
@@ -57,11 +63,16 @@
         socket.onclose = function() {
             console.log("WebSocket connection closed");
             status.textContent = 'Status: Disconnected';
+            connectBtn.disabled = false;
+            sendLocationBtn.disabled = true;
+
+            // Clear the interval if connection is closed
+            clearInterval(locationInterval);
         };
     };
 
-    // Send locationMessage button
-    sendLocationBtn.onclick = function() {
+    // Function to retrieve location and send it to the server
+    function sendLocation() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 // Get latitude and longitude
@@ -76,15 +87,15 @@
                     longitude: longitude
                 };
 
-                stompClient.send("/app/locationMessage", {}, JSON.stringify(locationMessage));
+                stompClient.send("/app/location", {}, JSON.stringify(locationMessage));  // Change to "/app/location"
             }, function(error) {
-                console.error("Error getting locationMessage: " + error.message);
-                locationStatus.textContent = "Location: Error retrieving locationMessage.";
+                console.error("Error getting location: " + error.message);
+                locationStatus.textContent = "Location: Error retrieving location.";
             });
         } else {
             alert("Geolocation is not supported by this browser.");
         }
-    };
+    }
 </script>
 </body>
 </html>

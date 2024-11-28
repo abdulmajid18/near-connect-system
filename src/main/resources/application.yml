@@ -1,6 +1,17 @@
 spring:
-  rabbitmq:
-    host: ${RABBITMQ_HOST:localhost}
-    port: ${RABBITMQ_PORT:5672}
-    username: ${RABBITMQ_USER:guest}
-    password: ${RABBITMQ_PASS:guest}
+  messaging:
+    stomp:
+      broker:
+        relay:
+          host: ${RABBITMQ_HOST}
+          port: ${RABBITMQ_STOMP_PORT}
+          username:  ${RABBITMQ_USERNAME}
+          password:  ${RABBITMQ_PASSWORD}
+        applicationDestinationPrefixes:
+          - /app
+        userDestinationPrefix: /user
+
+  web:
+    websocket:
+      enabled: true
+      origin: "*"
