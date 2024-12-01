@@ -14,6 +14,54 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: always  # Restart container if it fails
+    networks:
+      - cassandra_network
+
+  cassandra:
+    image: cassandra:latest
+    container_name: cassandra
+    environment:
+      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME:-TestCluster}
+      - CASSANDRA_DC=${CASSANDRA_DC:-datacenter1}
+      - CASSANDRA_RACK=${CASSANDRA_RACK:-rack1}
+      - CASSANDRA_NUM_TOKENS=${CASSANDRA_NUM_TOKENS:-256}
+      - CASSANDRA_SEEDS=${CASSANDRA_SEEDS:-cassandra}
+      - CASSANDRA_KEYSPACE=${CASSANDRA_KEYSPACE:-near-connect}
+    ports:
+      - "${CASSANDRA_PORT:-9042}:${CASSANDRA_PORT:-9042}"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+      - ./cql-scripts:/cql-scripts
+    networks:
+      - cassandra_network
+    healthcheck:
+      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      interval: 30s
+      retries: 10
+      start_period: 30s
+      timeout: 10s
+
+  cql-executor:
+    image: cassandra:latest
+    depends_on:
+      cassandra:
+        condition: service_healthy
+    volumes:
+      - ./cql-scripts:/cql-scripts
+    entrypoint: >
+      bash -c "
+      until cqlsh cassandra -e 'describe keyspaces'; do
+        echo 'Waiting for Cassandra to be ready...';
+        sleep 5;
+      done;
+      bash /cql-scripts/setup-keyspace.sh"
+    networks:
+      - cassandra_network
 
 volumes:
   rabbitmq_data:
+  cassandra_data:
+
+networks:
+  cassandra_network:
+    driver: bridge

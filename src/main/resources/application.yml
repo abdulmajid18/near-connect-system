@@ -10,7 +10,15 @@ spring:
         applicationDestinationPrefixes:
           - /app
         userDestinationPrefix: /user
-
+  data:
+    cassandra:
+      contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
+      port: ${CASSANDRA_PORT:9042}
+      keyspace-name: ${CASSANDRA_KEYSPACE:near-connect}
+      username: ${CASSANDRA_USERNAME:cassandra}
+      password: ${CASSANDRA_PASSWORD:cassandra}
+      local-datacenter: ${CASSANDRA_LOCAL_DATACENTER:datacenter1}
+      schema-action: ${CASSANDRA_SCHEMA_ACTION}
   web:
     websocket:
       enabled: true
