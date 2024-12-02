@@ -7,7 +7,7 @@ import org.springframework.data.cassandra.config.SchemaAction;
 import org.springframework.data.cassandra.repository.config.EnableCassandraRepositories;
 
 @Configuration
-@EnableCassandraRepositories(basePackages = "io.abdulmajid.near_connect.repositories")
+@EnableCassandraRepositories(basePackages = "io.abdulmajid.near_connect.websocket.repositories")
 public class CassandraConfig extends AbstractCassandraConfiguration {
 
     @Value("${spring.data.cassandra.keyspace-name}")

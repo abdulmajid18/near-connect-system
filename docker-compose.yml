@@ -13,13 +13,13 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-guest}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
-    restart: always  # Restart container if it fails
+    restart: always
     healthcheck:
       test: ["CMD", "rabbitmqctl", "status"]
-      interval: 30s
+      interval: 20s
       retries: 10
-      start_period: 30s
-      timeout: 10s
+      start_period: 60s
+      timeout: 15s
     networks:
       - cassandra_network
 
@@ -58,9 +58,10 @@ services:
       bash -c "
       until cqlsh cassandra -e 'describe keyspaces'; do
         echo 'Waiting for Cassandra to be ready...';
-        sleep 5;
+        sleep 10;
       done;
-      bash /cql-scripts/setup-keyspace.sh"
+      bash /cql-scripts/setup-keyspace.sh
+      cqlsh cassandra -f /cql-scripts/setup-schema.cql"
     networks:
       - cassandra_network
 

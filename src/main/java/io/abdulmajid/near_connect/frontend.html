@@ -8,8 +8,15 @@
 <body>
 <h1>Send Location to WebSocket</h1>
 
+<!-- Input for User ID -->
+<label for="userId">User ID: </label>
+<input type="text" id="userId" placeholder="Enter your User ID">
+<br><br>
+
+<!-- Connect Button -->
 <button id="connectBtn">Connect</button>
 <button id="sendLocationBtn" disabled>Send Location</button>
+<button id="disconnectBtn" disabled>Disconnect</button>
 
 <p id="status">Status: Not connected</p>
 <p id="locationStatus">Location: Not yet retrieved</p>
@@ -19,14 +26,21 @@
 <script>
     let socket;
     let stompClient;
-    let locationInterval;
     const connectBtn = document.getElementById('connectBtn');
     const sendLocationBtn = document.getElementById('sendLocationBtn');
+    const disconnectBtn = document.getElementById('disconnectBtn');
     const status = document.getElementById('status');
     const locationStatus = document.getElementById('locationStatus');
+    const userIdInput = document.getElementById('userId');  // User ID input
 
     // Connect button
     connectBtn.onclick = function() {
+        const userId = userIdInput.value.trim();
+        if (!userId) {
+            alert("Please enter your User ID.");
+            return;
+        }
+
         socket = new WebSocket('ws://localhost:8080/ws');  // WebSocket server URL
         stompClient = Stomp.over(socket);
 
@@ -36,6 +50,7 @@
             status.textContent = 'Status: Connected';  // Update the status once WebSocket is connected
             connectBtn.disabled = true;
             sendLocationBtn.disabled = false;
+            disconnectBtn.disabled = false;
 
             // Now connect STOMP
             stompClient.connect({}, function(frame) {
@@ -50,9 +65,6 @@
             }, function(error) {
                 console.error("STOMP connection failed", error);
             });
-
-            // Start sending location every 30 seconds after connection is established
-            locationInterval = setInterval(sendLocation, 30000);  // 30000ms = 30 seconds
         };
 
         socket.onerror = function(error) {
@@ -65,14 +77,12 @@
             status.textContent = 'Status: Disconnected';
             connectBtn.disabled = false;
             sendLocationBtn.disabled = true;
-
-            // Clear the interval if connection is closed
-            clearInterval(locationInterval);
+            disconnectBtn.disabled = true;
         };
     };
 
-    // Function to retrieve location and send it to the server
-    function sendLocation() {
+    // Function to retrieve location and send it to the server when the button is clicked
+    sendLocationBtn.onclick = function() {
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(function(position) {
                 // Get latitude and longitude
@@ -81,13 +91,16 @@
 
                 locationStatus.textContent = `Location: Latitude = ${latitude}, Longitude = ${longitude}`;
 
-                // Send locationMessage to the server
+                // Prepare the message with User ID, latitude, longitude, and timestamp
                 const locationMessage = {
+                    userId: userIdInput.value.trim(),  // Get User ID from input
                     latitude: latitude,
-                    longitude: longitude
+                    longitude: longitude,
+                    timestamp: new Date().toISOString()  // Send timestamp as ISO string
                 };
 
-                stompClient.send("/app/location", {}, JSON.stringify(locationMessage));  // Change to "/app/location"
+                // Send the location data to the backend
+                stompClient.send("/app/location", {}, JSON.stringify(locationMessage));  // Send to "/app/location"
             }, function(error) {
                 console.error("Error getting location: " + error.message);
                 locationStatus.textContent = "Location: Error retrieving location.";
@@ -95,7 +108,18 @@
         } else {
             alert("Geolocation is not supported by this browser.");
         }
-    }
+    };
+
+    // Disconnect button
+    disconnectBtn.onclick = function() {
+        if (stompClient) stompClient.disconnect();
+        if (socket) socket.close();
+
+        status.textContent = 'Status: Disconnected';
+        connectBtn.disabled = false;
+        sendLocationBtn.disabled = true;
+        disconnectBtn.disabled = true;
+    };
 </script>
 </body>
 </html>
