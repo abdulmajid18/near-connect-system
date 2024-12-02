@@ -14,7 +14,7 @@ spring:
     cassandra:
       contact-points: ${CASSANDRA_CONTACT_POINTS:localhost}
       port: ${CASSANDRA_PORT:9042}
-      keyspace-name: ${CASSANDRA_KEYSPACE:near-connect}
+      keyspace-name: ${CASSANDRA_KEYSPACE:near_connect}
       username: ${CASSANDRA_USERNAME:cassandra}
       password: ${CASSANDRA_PASSWORD:cassandra}
       local-datacenter: ${CASSANDRA_LOCAL_DATACENTER:datacenter1}

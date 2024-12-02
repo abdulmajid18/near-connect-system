@@ -14,6 +14,12 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     restart: always  # Restart container if it fails
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      retries: 10
+      start_period: 30s
+      timeout: 10s
     networks:
       - cassandra_network
 
@@ -21,12 +27,12 @@ services:
     image: cassandra:latest
     container_name: cassandra
     environment:
-      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME:-TestCluster}
-      - CASSANDRA_DC=${CASSANDRA_DC:-datacenter1}
-      - CASSANDRA_RACK=${CASSANDRA_RACK:-rack1}
-      - CASSANDRA_NUM_TOKENS=${CASSANDRA_NUM_TOKENS:-256}
-      - CASSANDRA_SEEDS=${CASSANDRA_SEEDS:-cassandra}
-      - CASSANDRA_KEYSPACE=${CASSANDRA_KEYSPACE:-near-connect}
+      - CASSANDRA_CLUSTER_NAME=${CASSANDRA_CLUSTER_NAME}
+      - CASSANDRA_DC=${CASSANDRA_DC}
+      - CASSANDRA_RACK=${CASSANDRA_RACK}
+      - CASSANDRA_NUM_TOKENS=${CASSANDRA_NUM_TOKENS}
+      - CASSANDRA_SEEDS=${CASSANDRA_SEEDS}
+      - CASSANDRA_KEYSPACE=${CASSANDRA_KEYSPACE}
     ports:
       - "${CASSANDRA_PORT:-9042}:${CASSANDRA_PORT:-9042}"
     volumes:
