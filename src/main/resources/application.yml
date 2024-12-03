@@ -19,6 +19,14 @@ spring:
       password: ${CASSANDRA_PASSWORD:cassandra}
       local-datacenter: ${CASSANDRA_LOCAL_DATACENTER:datacenter1}
       schema-action: ${CASSANDRA_SCHEMA_ACTION}
+  cache:
+    type: redis
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:6000}
+
   web:
     websocket:
       enabled: true

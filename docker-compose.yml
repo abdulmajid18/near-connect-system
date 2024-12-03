@@ -21,7 +21,7 @@ services:
       start_period: 60s
       timeout: 15s
     networks:
-      - cassandra_network
+      - app_network
 
   cassandra:
     image: cassandra:latest
@@ -39,9 +39,9 @@ services:
       - cassandra_data:/var/lib/cassandra
       - ./cql-scripts:/cql-scripts
     networks:
-      - cassandra_network
+      - app_network
     healthcheck:
-      test: [ "CMD", "cqlsh", "-e", "describe keyspaces" ]
+      test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
       interval: 30s
       retries: 10
       start_period: 30s
@@ -63,12 +63,32 @@ services:
       bash /cql-scripts/setup-keyspace.sh
       cqlsh cassandra -f /cql-scripts/setup-schema.cql"
     networks:
-      - cassandra_network
+      - app_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command: redis-server --requirepass ${REDIS_PASSWORD:-}
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      retries: 5
+      start_period: 5s
+      timeout: 5s
+    networks:
+      - app_network
 
 volumes:
   rabbitmq_data:
   cassandra_data:
+  redis_data:
 
 networks:
-  cassandra_network:
+  app_network:
     driver: bridge

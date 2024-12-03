@@ -3,10 +3,9 @@ package io.abdulmajid.near_connect.websocket.services;
 import io.abdulmajid.near_connect.websocket.dtos.LocationHistoryDTO;
 import io.abdulmajid.near_connect.websocket.entities.LocationHistory;
 import io.abdulmajid.near_connect.websocket.repositories.LocationHistoryRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
@@ -16,6 +15,7 @@ public class LocationHistoryService {
         this.locationHistoryRepository = locationHistoryRepository;
     }
 
+    @CachePut(value = "locationHistoryCache", key = "#dto.userId")
     public LocationHistoryDTO saveLocationHistory(LocationHistoryDTO dto) {
         LocationHistory locationHistory = LocationHistory.create(dto.getUserId(), dto.getLatitude(), dto.getLongitude());
 
