@@ -3,123 +3,167 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Location</title>
+    <title>WebSocket Location Sender</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        #debugLog {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ccc;
+            padding: 10px;
+            background: #f4f4f4;
+        }
+        .log-entry { margin-bottom: 5px; }
+        .log-entry.info { color: black; }
+        .log-entry.warn { color: orange; }
+        .log-entry.error { color: red; }
+        .log-entry.incoming { color: green; }
+        .log-entry.outgoing { color: blue; }
+    </style>
 </head>
 <body>
-<h1>Send Location to WebSocket</h1>
+<h1>WebSocket Location Sender</h1>
 
-<!-- Input for User ID -->
-<label for="userId">User ID: </label>
-<input type="text" id="userId" placeholder="Enter your User ID">
-<br><br>
+<!-- Connection Controls -->
+<div>
+    <label for="userId">User ID:</label>
+    <input type="text" id="userId" placeholder="Enter User ID">
+    <button id="connectBtn">Connect</button>
+    <button id="disconnectBtn" disabled>Disconnect</button>
+</div>
 
-<!-- Connect Button -->
-<button id="connectBtn">Connect</button>
-<button id="sendLocationBtn" disabled>Send Location</button>
-<button id="disconnectBtn" disabled>Disconnect</button>
+<!-- Connection Status -->
+<div>
+    <h2>Connection Status</h2>
+    <p id="status">Not Connected</p>
+</div>
 
-<p id="status">Status: Not connected</p>
-<p id="locationStatus">Location: Not yet retrieved</p>
+<!-- Send Location -->
+<div>
+    <h2>Send Location</h2>
+    <button id="sendLocationBtn" disabled>Send Current Location</button>
+</div>
 
-<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+<!-- Debug Log -->
+<div>
+    <h2>Debug Log</h2>
+    <div id="debugLog"></div>
+</div>
 
 <script>
-    let socket;
-    let stompClient;
-    const connectBtn = document.getElementById('connectBtn');
-    const sendLocationBtn = document.getElementById('sendLocationBtn');
-    const disconnectBtn = document.getElementById('disconnectBtn');
-    const status = document.getElementById('status');
-    const locationStatus = document.getElementById('locationStatus');
-    const userIdInput = document.getElementById('userId');  // User ID input
+    class WebSocketDebugger {
+        constructor() {
+            this.socket = null;
+            this.userIdInput = document.getElementById('userId');
+            this.connectBtn = document.getElementById('connectBtn');
+            this.disconnectBtn = document.getElementById('disconnectBtn');
+            this.statusElement = document.getElementById('status');
+            this.debugLogElement = document.getElementById('debugLog');
+            this.sendLocationBtn = document.getElementById('sendLocationBtn');
 
-    // Connect button
-    connectBtn.onclick = function() {
-        const userId = userIdInput.value.trim();
-        if (!userId) {
-            alert("Please enter your User ID.");
-            return;
+            this.setupEventListeners();
         }
 
-        socket = new WebSocket('ws://localhost:8080/ws');  // WebSocket server URL
-        stompClient = Stomp.over(socket);
+        setupEventListeners() {
+            this.connectBtn.addEventListener('click', () => this.connect());
+            this.disconnectBtn.addEventListener('click', () => this.disconnect());
+            this.sendLocationBtn.addEventListener('click', () => this.sendLocation());
+        }
 
-        // WebSocket event handlers
-        socket.onopen = function() {
-            console.log("WebSocket connected successfully");
-            status.textContent = 'Status: Connected';  // Update the status once WebSocket is connected
-            connectBtn.disabled = true;
-            sendLocationBtn.disabled = false;
-            disconnectBtn.disabled = false;
+        log(message, type = 'info') {
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${new Date().toISOString()}] ${message}`;
+            logEntry.className = `log-entry ${type}`;
+            this.debugLogElement.appendChild(logEntry);
 
-            // Now connect STOMP
-            stompClient.connect({}, function(frame) {
-                console.log("STOMP connection established", frame);
+            // Auto-scroll to the latest entry
+            this.debugLogElement.scrollTop = this.debugLogElement.scrollHeight;
 
-                // Subscribe to the topic where server will send responses (optional for testing)
-                stompClient.subscribe('/topic/locations', function(message) {
-                    const receivedLocation = JSON.parse(message.body);
-                    console.log('Received location: ', receivedLocation);
-                    locationStatus.textContent = `Location: Latitude = ${receivedLocation.latitude}, Longitude = ${receivedLocation.longitude}`;
-                });
-            }, function(error) {
-                console.error("STOMP connection failed", error);
-            });
-        };
+            console.log(message);
+        }
 
-        socket.onerror = function(error) {
-            console.error("WebSocket connection failed", error);
-            status.textContent = 'Status: Connection failed';
-        };
+        connect() {
+            const userId = this.userIdInput.value.trim();
+            if (!userId) {
+                alert('Please enter a User ID');
+                return;
+            }
 
-        socket.onclose = function() {
-            console.log("WebSocket connection closed");
-            status.textContent = 'Status: Disconnected';
-            connectBtn.disabled = false;
-            sendLocationBtn.disabled = true;
-            disconnectBtn.disabled = true;
-        };
-    };
+            const wsUrl = window.location.protocol === 'https:'
+                ? `wss://your-domain.com/ws?userId=${encodeURIComponent(userId)}`
+                : `ws://localhost:8080/ws?userId=${encodeURIComponent(userId)}`;
 
-    // Function to retrieve location and send it to the server when the button is clicked
-    sendLocationBtn.onclick = function() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(function(position) {
-                // Get latitude and longitude
-                const latitude = position.coords.latitude;
-                const longitude = position.coords.longitude;
+            try {
+                this.socket = new WebSocket(wsUrl);
 
-                locationStatus.textContent = `Location: Latitude = ${latitude}, Longitude = ${longitude}`;
-
-                // Prepare the message with User ID, latitude, longitude, and timestamp
-                const locationMessage = {
-                    userId: userIdInput.value.trim(),  // Get User ID from input
-                    latitude: latitude,
-                    longitude: longitude,
-                    timestamp: new Date().toISOString()  // Send timestamp as ISO string
+                this.socket.onopen = () => {
+                    this.log('WebSocket Connection Opened', 'info');
+                    this.statusElement.textContent = 'Connected';
+                    this.connectBtn.disabled = true;
+                    this.disconnectBtn.disabled = false;
+                    this.sendLocationBtn.disabled = false;
                 };
 
-                // Send the location data to the backend
-                stompClient.send("/app/location", {}, JSON.stringify(locationMessage));  // Send to "/app/location"
-            }, function(error) {
-                console.error("Error getting location: " + error.message);
-                locationStatus.textContent = "Location: Error retrieving location.";
-            });
-        } else {
-            alert("Geolocation is not supported by this browser.");
+                this.socket.onmessage = (event) => {
+                    this.log(`Received: ${event.data}`, 'incoming');
+                };
+
+                this.socket.onclose = (event) => {
+                    this.log(`WebSocket Closed: Code ${event.code}, Reason: ${event.reason || 'No reason'}`, 'warn');
+                    this.statusElement.textContent = `Disconnected (Code: ${event.code})`;
+                    this.connectBtn.disabled = false;
+                    this.disconnectBtn.disabled = true;
+                    this.sendLocationBtn.disabled = true;
+                };
+
+                this.socket.onerror = (error) => {
+                    this.log(`WebSocket Error: ${error.message}`, 'error');
+                    this.statusElement.textContent = 'Connection Error';
+                };
+            } catch (error) {
+                this.log(`Connection Setup Error: ${error.message}`, 'error');
+            }
         }
-    };
 
-    // Disconnect button
-    disconnectBtn.onclick = function() {
-        if (stompClient) stompClient.disconnect();
-        if (socket) socket.close();
+        sendLocation() {
+            if (!navigator.geolocation) {
+                this.log('Geolocation is not supported by this browser', 'error');
+                return;
+            }
 
-        status.textContent = 'Status: Disconnected';
-        connectBtn.disabled = false;
-        sendLocationBtn.disabled = true;
-        disconnectBtn.disabled = true;
-    };
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const userId = this.userIdInput.value.trim();
+                    const payload = {
+                        userId: userId,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        timestamp: new Date().toISOString(),
+                    };
+
+                    if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+                        this.socket.send(JSON.stringify(payload));
+                        this.log(`Sent: ${JSON.stringify(payload)}`, 'outgoing');
+                    } else {
+                        this.log('Cannot send location: WebSocket is not connected', 'warn');
+                    }
+                },
+                (error) => {
+                    this.log(`Error getting location: ${error.message}`, 'error');
+                }
+            );
+        }
+
+        disconnect() {
+            if (this.socket) {
+                this.log('Closing WebSocket connection', 'info');
+                this.socket.close(1000, 'User initiated close');
+            }
+        }
+    }
+
+    // Initialize the WebSocket Debugger
+    new WebSocketDebugger();
 </script>
 </body>
 </html>
