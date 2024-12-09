@@ -1,5 +1,6 @@
 package io.abdulmajid.near_connect.general.configs;
 
+import io.abdulmajid.near_connect.websocket.services.CacheName;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -28,7 +29,7 @@ public class RedisCacheConfig {
     @Bean
     public RedisCacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         RedisCacheConfiguration config = RedisCacheConfiguration.defaultCacheConfig()
-                .prefixCacheNameWith("locationHistoryCache")
+                .prefixCacheNameWith(CacheName.LOCATION_CACHE.getCacheName())
                 .entryTtl(Duration.ofHours(1))
                 .disableCachingNullValues();
 

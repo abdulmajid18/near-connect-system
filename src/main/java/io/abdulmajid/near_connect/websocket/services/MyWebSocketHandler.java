@@ -1,12 +1,10 @@
 package io.abdulmajid.near_connect.websocket.services;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import io.abdulmajid.near_connect.websocket.dtos.LocationHistoryDTO;
+import io.abdulmajid.near_connect.websocket.dtos.ObjectMapperUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.cache.Cache;
-import org.springframework.cache.CacheManager;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -16,19 +14,18 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(MyWebSocketHandler.class);
 
-    private final LocationHistoryService locationHistoryService;
-    private final CacheManager cacheManager;
+    private final LocationCache locationCache;
 
-    public MyWebSocketHandler(LocationHistoryService locationHistoryService, CacheManager cacheManager) {
-        this.locationHistoryService = locationHistoryService;
-        this.cacheManager = cacheManager;
+    public MyWebSocketHandler(LocationCache locationCache) {
+        this.locationCache = locationCache;
     }
+
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String userId = getUserIdFromSession(session);
         logger.info("Connection closed for userId: {} with status: {}", userId, status);
-        evictCache(userId);
+        locationCache.evictCache(userId);
     }
 
     @Override
@@ -38,16 +35,11 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
             logger.info("Received message: " + payload);
             session.sendMessage(new TextMessage("Echo: " + payload));
 
-            // Initialize ObjectMapper and register the JavaTimeModule to handle LocalDateTime
-            ObjectMapper objectMapper = new ObjectMapper();
-            objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+            LocationHistoryDTO location  = ObjectMapperUtils.deserializeLocation(payload);
+            if (location != null){
+                locationCache.cacheLocation(location.getUserId(), location);
+            }
 
-            // Deserialize payload into LocationHistoryDTO
-            LocationHistoryDTO locationHistoryDTO = objectMapper.readValue(payload, LocationHistoryDTO.class);
-            locationHistoryService.saveLocationHistory(locationHistoryDTO);
-        } catch (JsonProcessingException e) {
-            logger.error("Error processing message: ", e);
-            session.close(CloseStatus.SERVER_ERROR);
         } catch (Exception e) {
             logger.error("General error handling message: ", e);
             session.close(CloseStatus.SERVER_ERROR);
@@ -62,14 +54,4 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         return userId;
     }
 
-    @SuppressWarnings("ConstantConditions")
-    private void evictCache(String userId) {
-        Cache cache = cacheManager.getCache("locationHistoryCache");
-        if (cache != null) {
-            logger.info("Evicting cache for userId: {}", userId);
-            cache.evict(userId);
-        } else {
-            logger.warn("Cache not found for eviction: locationHistoryCache");
-        }
-    }
 }

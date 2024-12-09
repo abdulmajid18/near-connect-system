@@ -21,7 +21,7 @@ public class LocationCache {
         Cache cache = cacheManager.getCache(CacheName.LOCATION_CACHE.getCacheName());
         if (cache != null) {
             cache.put(userId, location);
-            log.info("LocationHistoryDTO cached for userId: " + userId);
+            log.info("Location cached for userId: " + userId);
         } else {
             log.warn("Cache not found");
         }
@@ -34,7 +34,7 @@ public class LocationCache {
             log.info("Evicting cache for userId: {}", userId);
             cache.evict(userId);
         } else {
-            log.warn("Cache not found for eviction: locationHistoryCache");
+            log.warn("Cache not found for eviction: location");
         }
     }
 
