@@ -8,6 +8,8 @@ public class LocationHistoryDTO {
     private double longitude;
     private LocalDateTime timestamp;
 
+    public LocationHistoryDTO() {}
+
     public LocationHistoryDTO(String userId, double latitude, double longitude, LocalDateTime timestamp) {
         this.userId = userId;
         this.latitude = latitude;

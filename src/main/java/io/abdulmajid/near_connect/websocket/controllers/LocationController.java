@@ -20,6 +20,7 @@ public class LocationController {
     @MessageMapping("/location")
     public void handleLocationUpdate(@Payload LocationHistoryDTO message) {
         System.out.println("Received location: " + message);
+        System.out.println("&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&" + message.getLongitude());
         LocationHistoryDTO savedMessage = locationHistoryService.saveLocationHistory(message);
         System.out.println("Location Saved: " + savedMessage );
 

@@ -1,5 +1,8 @@
 package io.abdulmajid.near_connect.websocket.services;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import io.abdulmajid.near_connect.websocket.dtos.LocationHistoryDTO;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.Cache;
@@ -12,9 +15,12 @@ import org.springframework.web.socket.handler.TextWebSocketHandler;
 public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(MyWebSocketHandler.class);
+
+    private final LocationHistoryService locationHistoryService;
     private final CacheManager cacheManager;
 
-    public MyWebSocketHandler(CacheManager cacheManager) {
+    public MyWebSocketHandler(LocationHistoryService locationHistoryService, CacheManager cacheManager) {
+        this.locationHistoryService = locationHistoryService;
         this.cacheManager = cacheManager;
     }
 
@@ -28,14 +34,26 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) throws Exception {
         try {
-            System.out.println("Received message: " + message.getPayload());
-            // Simulate echo response for testing
-            session.sendMessage(new TextMessage("Echo: " + message.getPayload()));
+            String payload = message.getPayload();
+            logger.info("Received message: " + payload);
+            session.sendMessage(new TextMessage("Echo: " + payload));
+
+            // Initialize ObjectMapper and register the JavaTimeModule to handle LocalDateTime
+            ObjectMapper objectMapper = new ObjectMapper();
+            objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+
+            // Deserialize payload into LocationHistoryDTO
+            LocationHistoryDTO locationHistoryDTO = objectMapper.readValue(payload, LocationHistoryDTO.class);
+            locationHistoryService.saveLocationHistory(locationHistoryDTO);
+        } catch (JsonProcessingException e) {
+            logger.error("Error processing message: ", e);
+            session.close(CloseStatus.SERVER_ERROR);
         } catch (Exception e) {
-            System.err.println("Error handling message: " + e.getMessage());
+            logger.error("General error handling message: ", e);
             session.close(CloseStatus.SERVER_ERROR);
         }
     }
+
 
 
     private String getUserIdFromSession(WebSocketSession session) {

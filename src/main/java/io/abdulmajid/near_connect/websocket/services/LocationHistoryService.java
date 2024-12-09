@@ -3,23 +3,25 @@ package io.abdulmajid.near_connect.websocket.services;
 import io.abdulmajid.near_connect.websocket.dtos.LocationHistoryDTO;
 import io.abdulmajid.near_connect.websocket.entities.LocationHistory;
 import io.abdulmajid.near_connect.websocket.repositories.LocationHistoryRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CachePut;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
+@Slf4j
 public class LocationHistoryService {
     private final LocationHistoryRepository locationHistoryRepository;
     public LocationHistoryService(LocationHistoryRepository locationHistoryRepository) {
         this.locationHistoryRepository = locationHistoryRepository;
     }
 
-    @CachePut(value = "locationHistoryCache", key = "#dto.userId")
     public LocationHistoryDTO saveLocationHistory(LocationHistoryDTO dto) {
         LocationHistory locationHistory = LocationHistory.create(dto.getUserId(), dto.getLatitude(), dto.getLongitude());
 
         LocationHistory saved = locationHistoryRepository.save(locationHistory);
+        log.info("Location History saved  " + saved);
         return new LocationHistoryDTO(saved.getUserId(), saved.getLatitude(), saved.getLongitude(), saved.getTimestamp());
     }
 
