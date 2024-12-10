@@ -1,6 +1,6 @@
 package io.abdulmajid.near_connect.websocket.services;
 
-import io.abdulmajid.near_connect.websocket.dtos.LocationHistoryDTO;
+import io.abdulmajid.near_connect.websocket.dtos.LocationDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
@@ -17,7 +17,7 @@ public class LocationCache {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public void cacheLocation(String userId, LocationHistoryDTO location) {
+    public void cacheLocation(String userId, LocationDTO location) {
         Cache cache = cacheManager.getCache(CacheName.LOCATION_CACHE.getCacheName());
         if (cache != null) {
             cache.put(userId, location);
@@ -39,11 +39,11 @@ public class LocationCache {
     }
 
     @SuppressWarnings("ConstantConditions")
-    public LocationHistoryDTO getLocationHistoryFromCache(String userId) {
+    public LocationDTO getLocationHistoryFromCache(String userId) {
         Cache cache = cacheManager.getCache(CacheName.LOCATION_CACHE.getCacheName());  // Get the cache by name
         if (cache != null) {
             Cache.ValueWrapper valueWrapper = cache.get(userId);  // Retrieve the object by key
-            return valueWrapper != null ? (LocationHistoryDTO) valueWrapper.get() : null;
+            return valueWrapper != null ? (LocationDTO) valueWrapper.get() : null;
         }
         return null;
     }

@@ -6,7 +6,7 @@ import org.springframework.data.cassandra.repository.CassandraRepository;
 import java.util.List;
 import java.util.UUID;
 
-public interface LocationHistoryRepository extends CassandraRepository<LocationHistory, UUID> {
+public interface LocationRepository extends CassandraRepository<LocationHistory, UUID> {
     List<LocationHistory> findByUserId(String userId);
     List<LocationHistory> findByUserIdOrderByTimestampDesc(String userId);
 

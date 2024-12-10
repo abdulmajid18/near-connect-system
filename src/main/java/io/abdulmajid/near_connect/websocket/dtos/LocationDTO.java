@@ -2,15 +2,15 @@ package io.abdulmajid.near_connect.websocket.dtos;
 
 import java.time.LocalDateTime;
 
-public class LocationHistoryDTO {
+public class LocationDTO {
     private String userId;
     private double latitude;
     private double longitude;
     private LocalDateTime timestamp;
 
-    public LocationHistoryDTO() {}
+    public LocationDTO() {}
 
-    public LocationHistoryDTO(String userId, double latitude, double longitude, LocalDateTime timestamp) {
+    public LocationDTO(String userId, double latitude, double longitude, LocalDateTime timestamp) {
         this.userId = userId;
         this.latitude = latitude;
         this.longitude = longitude;
