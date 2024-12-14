@@ -17,9 +17,19 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private final RabbitTemplate rabbitTemplate;
 
-    public MyWebSocketHandler(LocationCache locationCache, RabbitTemplate rabbitTemplate) {
+    private final RedisPubSub redisPubSub;
+
+
+    public MyWebSocketHandler(LocationCache locationCache, RabbitTemplate rabbitTemplate, RedisPubSub redisPubSub) {
         this.locationCache = locationCache;
         this.rabbitTemplate = rabbitTemplate;
+        this.redisPubSub = redisPubSub;
+    }
+
+    @Override
+    public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        String userId = getUserIdFromSession(session);
+        redisPubSub.setUpPubSub(userId);
     }
 
 
@@ -28,6 +38,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
         String userId = getUserIdFromSession(session);
         log.info("Connection closed for userId: {} with status: {}", userId, status);
         locationCache.evictCache(userId);
+        redisPubSub.removePubSub(userId);
     }
 
     @Override
