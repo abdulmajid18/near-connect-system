@@ -1,6 +1,7 @@
 package io.abdulmajid.near_connect.websocket.services;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -9,13 +10,14 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 public class RedisPubSub {
-
+    private final StringRedisTemplate redisTemplate;
     private final RedisMessageListenerContainer redisMessageListenerContainer;
 
     private final MessageListenerAdapter listenerAdapter;
 
-    public RedisPubSub(RedisMessageListenerContainer redisMessageListenerContainer,
-                      MessageListenerAdapter listenerAdapter) {
+    public RedisPubSub(StringRedisTemplate redisTemplate, RedisMessageListenerContainer redisMessageListenerContainer,
+                       MessageListenerAdapter listenerAdapter) {
+        this.redisTemplate = redisTemplate;
         this.redisMessageListenerContainer = redisMessageListenerContainer;
         this.listenerAdapter = listenerAdapter;
     }
@@ -39,6 +41,10 @@ public class RedisPubSub {
         log.info("Unsubscribed from topic: {}", topicName);
     }
 
-    public void publishMessage() {}
+    public void publishLocation(String location, String userId) {
+        String topicName = "user:" + userId + ":location";
+        redisTemplate.convertAndSend(topicName, location);
+        log.info("Message published: {}", location);
+    }
 }
 
