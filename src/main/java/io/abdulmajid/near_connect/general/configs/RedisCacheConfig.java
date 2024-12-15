@@ -74,10 +74,4 @@ public class RedisCacheConfig {
 
         return objectMapper;
     }
-
-    @Bean
-    public StringRedisTemplate redisTemplate(RedisConnectionFactory connectionFactory) {
-        return new StringRedisTemplate(connectionFactory);
-    }
-
 }

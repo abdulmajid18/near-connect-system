@@ -24,7 +24,7 @@ public class RedisPubSub {
 
     // Set up dynamic Pub/Sub for the user
     public void setUpChannelTopic(String userId) {
-        String topicName = "user:" + userId + ":location";
+        String topicName = generateTopicName(userId);
         ChannelTopic topic = new ChannelTopic(topicName);
 
         redisMessageListenerContainer.addMessageListener(listenerAdapter, topic);
@@ -33,7 +33,7 @@ public class RedisPubSub {
 
     // Remove dynamic Pub/Sub for the user
     public void removeChannelTopic(String userId) {
-        String topicName = "user:" + userId + ":location";
+        String topicName = generateTopicName(userId);
         ChannelTopic topic = new ChannelTopic(topicName);
 
         // Remove the message listener from the container for the user topic
@@ -41,10 +41,19 @@ public class RedisPubSub {
         log.info("Unsubscribed from topic: {}", topicName);
     }
 
-    public void publishLocation(String location, String userId) {
-        String topicName = "user:" + userId + ":location";
-        redisTemplate.convertAndSend(topicName, location);
-        log.info("Message published: {}", location);
+    private String generateTopicName(String userId) {
+        return "user:" + userId + ":location";
     }
+
+    public void publishLocation(String location, String userId) {
+        String topicName = generateTopicName(userId);
+        try {
+            redisTemplate.convertAndSend(topicName, location);
+            log.info("Message published to topic [{}]: {}", topicName, location);
+        } catch (Exception e) {
+            log.error("Failed to publish message to topic [{}]: {}", topicName, location, e);
+        }
+    }
+
 }
 

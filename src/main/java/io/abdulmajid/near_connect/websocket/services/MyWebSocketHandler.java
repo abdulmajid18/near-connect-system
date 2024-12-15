@@ -4,7 +4,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import io.abdulmajid.near_connect.websocket.dtos.LocationDTO;
 import io.abdulmajid.near_connect.websocket.dtos.ObjectMapperUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.socket.CloseStatus;
@@ -25,7 +24,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
     private final LocationCache locationCache;
 
-    private final RabbitTemplate rabbitTemplate;
+    private final RabbitMQService rabbitMQService;
 
     private final RedisPubSub redisPubSub;
 
@@ -33,12 +32,12 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
 
     @Autowired
     public MyWebSocketHandler(ObjectMapperUtils objectMapperUtils, LocationCache locationCache,
-                              RabbitTemplate rabbitTemplate, RedisPubSub redisPubSub,
+                              RabbitMQService rabbitMQService, RedisPubSub redisPubSub,
                               ExecutorService executor) {
 
         this.objectMapperUtils = objectMapperUtils;
         this.locationCache = locationCache;
-        this.rabbitTemplate = rabbitTemplate;
+        this.rabbitMQService = rabbitMQService;
         this.redisPubSub = redisPubSub;
         this.executor = executor;
     }
@@ -72,7 +71,9 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                     try {
                         LocationDTO loc = location.get();
                         locationCache.cacheLocation(loc.getUserId(), loc);
-                        rabbitTemplate.convertAndSend(RabbitMQQueue.LOCATION_UPDATES.getQueueName(), loc);
+                        rabbitMQService.queueLocation(loc);
+                        Optional<String> locationStr  = objectMapperUtils.serializeLocation(loc);
+                        locationStr.ifPresent(locStr -> redisPubSub.publishLocation(locStr, loc.getUserId()));
                         log.info("Location processed for userId: {}", loc.getUserId());
                     } catch (Exception e) {
                         log.error("Error processing location asynchronously: ", e);
