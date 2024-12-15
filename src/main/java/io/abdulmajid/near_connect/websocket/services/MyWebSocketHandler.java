@@ -46,6 +46,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String userId = getUserIdFromSession(session);
         redisPubSub.setUpChannelTopic(userId);
+        // user location to fetch users active friends and setup thier channels
     }
 
 

@@ -60,7 +60,6 @@
             this.statusElement = document.getElementById('status');
             this.debugLogElement = document.getElementById('debugLog');
             this.sendLocationBtn = document.getElementById('sendLocationBtn');
-            this.locationInterval = null; // Interval timer for sending location updates
 
             this.setupEventListeners();
         }
@@ -103,9 +102,6 @@
                     this.connectBtn.disabled = true;
                     this.disconnectBtn.disabled = false;
                     this.sendLocationBtn.disabled = false;
-
-                    // Start sending location every 5 seconds
-                    this.startSendingLocation();
                 };
 
                 this.socket.onmessage = (event) => {
@@ -118,9 +114,6 @@
                     this.connectBtn.disabled = false;
                     this.disconnectBtn.disabled = true;
                     this.sendLocationBtn.disabled = true;
-
-                    // Stop sending location updates
-                    this.stopSendingLocation();
                 };
 
                 this.socket.onerror = (error) => {
@@ -129,19 +122,6 @@
                 };
             } catch (error) {
                 this.log(`Connection Setup Error: ${error.message}`, 'error');
-            }
-        }
-
-        startSendingLocation() {
-            this.log('Starting automatic location updates every 5 seconds', 'info');
-            this.locationInterval = setInterval(() => this.sendLocation(), 5000);
-        }
-
-        stopSendingLocation() {
-            if (this.locationInterval) {
-                this.log('Stopping automatic location updates', 'info');
-                clearInterval(this.locationInterval);
-                this.locationInterval = null;
             }
         }
 
@@ -185,5 +165,6 @@
     // Initialize the WebSocket Debugger
     new WebSocketDebugger();
 </script>
+
 </body>
 </html>
