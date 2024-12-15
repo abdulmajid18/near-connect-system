@@ -4,9 +4,9 @@ import io.abdulmajid.near_connect.websocket.dtos.LocationDTO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
-import org.springframework.stereotype.Service;
+import org.springframework.stereotype.Component;
 
-@Service
+@Component
 @Slf4j
 public class LocationCache {
 

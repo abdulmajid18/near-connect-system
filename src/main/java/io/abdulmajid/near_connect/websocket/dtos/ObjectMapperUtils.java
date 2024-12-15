@@ -2,22 +2,39 @@ package io.abdulmajid.near_connect.websocket.dtos;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
+
+@Slf4j
+@Component
 public class ObjectMapperUtils {
-    private static final Logger logger = LoggerFactory.getLogger(ObjectMapperUtils.class);
+    private final ObjectMapper objectMapper;
 
-    public static LocationDTO deserializeLocation(String payload) throws JsonProcessingException {
-        // Initialize ObjectMapper and register the JavaTimeModule to handle LocalDateTime
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new com.fasterxml.jackson.datatype.jsr310.JavaTimeModule());
+    @Autowired
+    public ObjectMapperUtils(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
+    public Optional<LocationDTO> deserializeLocation(String payload) throws JsonProcessingException {
         try {
-            return objectMapper.readValue(payload, LocationDTO.class);
+            return Optional.ofNullable(objectMapper.readValue(payload, LocationDTO.class));
         } catch (JsonProcessingException e) {
-            logger.error("Error deserializing payload: {}", payload, e);
-            return null;
+            log.error("Error deserializing payload: {}", payload, e);
+            return Optional.empty();
         }
     }
+
+    public Optional<String> serializeLocation(LocationDTO locationDTO) {
+        try {
+            return  Optional.ofNullable(objectMapper.writeValueAsString(locationDTO));
+        } catch (JsonProcessingException e) {
+            log.error("Error serializing LocationDTO: {}", locationDTO, e);
+            return Optional.empty();
+        }
+    }
+
 }

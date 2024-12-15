@@ -1,38 +1,39 @@
 package io.abdulmajid.near_connect.websocket.configs;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.socket.WebSocketHandler;
 import org.springframework.web.socket.server.HandshakeInterceptor;
 
 import java.net.URI;
 import java.util.Map;
 
+@Slf4j
+@Component
 public class WebSocketHandShakeInterceptor implements HandshakeInterceptor {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebSocketHandShakeInterceptor.class);
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
         URI uri = request.getURI();
         String query = uri.getQuery();
 
-        logger.debug("Handshake URI: {}", uri);
-        logger.debug("Query String: {}", query);
+        log.debug("Handshake URI: {}", uri);
+        log.debug("Query String: {}", query);
 
         if (query != null && query.contains("userId")) {
             // Parse the query string for userId
             String userId = getQueryParam(query, "userId");
             if (userId != null) {
                 attributes.put("userId", userId);
-                logger.info("Handshake initiated. User-ID from query parameter: {}", userId);
+                log.info("Handshake initiated. User-ID from query parameter: {}", userId);
             } else {
-                logger.warn("User-ID not found in query parameters.");
+                log.warn("User-ID not found in query parameters.");
             }
         } else {
-            logger.warn("Query parameters are missing or userId is not included.");
+            log.warn("Query parameters are missing or userId is not included.");
         }
         return true;
     }
@@ -41,9 +42,9 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor {
     @SuppressWarnings("ConstantConditions")
     public void afterHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Exception exception) {
         if (exception != null) {
-            logger.error("Error during WebSocket handshake: {}", exception.getMessage());
+            log.error("Error during WebSocket handshake: {}", exception.getMessage());
         } else {
-            logger.info("Handshake completed successfully.");
+            log.info("Handshake completed successfully.");
         }
     }
 

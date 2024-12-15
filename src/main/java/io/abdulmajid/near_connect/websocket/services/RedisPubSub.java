@@ -11,19 +11,17 @@ import org.springframework.stereotype.Service;
 public class RedisPubSub {
 
     private final RedisMessageListenerContainer redisMessageListenerContainer;
-    private final RedisMessageSubscriber redisMessageSubscriber;
 
     private final MessageListenerAdapter listenerAdapter;
 
     public RedisPubSub(RedisMessageListenerContainer redisMessageListenerContainer,
-                       RedisMessageSubscriber redisMessageSubscriber, MessageListenerAdapter listenerAdapter) {
+                      MessageListenerAdapter listenerAdapter) {
         this.redisMessageListenerContainer = redisMessageListenerContainer;
-        this.redisMessageSubscriber = redisMessageSubscriber;
         this.listenerAdapter = listenerAdapter;
     }
 
     // Set up dynamic Pub/Sub for the user
-    public void setUpPubSub(String userId) {
+    public void setUpChannelTopic(String userId) {
         String topicName = "user:" + userId + ":location";
         ChannelTopic topic = new ChannelTopic(topicName);
 
@@ -32,7 +30,7 @@ public class RedisPubSub {
     }
 
     // Remove dynamic Pub/Sub for the user
-    public void removePubSub(String userId) {
+    public void removeChannelTopic(String userId) {
         String topicName = "user:" + userId + ":location";
         ChannelTopic topic = new ChannelTopic(topicName);
 
@@ -40,5 +38,7 @@ public class RedisPubSub {
         redisMessageListenerContainer.removeMessageListener(listenerAdapter, topic);
         log.info("Unsubscribed from topic: {}", topicName);
     }
+
+    public void publishMessage() {}
 }
 
