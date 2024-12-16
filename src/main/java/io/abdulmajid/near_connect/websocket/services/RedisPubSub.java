@@ -9,6 +9,7 @@ import org.springframework.data.redis.listener.ChannelTopic;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -30,12 +31,12 @@ public class RedisPubSub {
         this.subscriber = subscriber;
     }
 
-    public void subscribeToChannel(String channelName) {
+    private void subscribeToChannel(String channelName) {
         log.info("Subscribing to channel: {}", channelName);
         redisMessageListenerContainer.addMessageListener(subscriber, new PatternTopic(channelName));
     }
 
-    public void setupUserChannels(String userId, List<String> otherUserIds) {
+    public void setupUserChannels(String userId, Set<String> otherUserIds) {
         setUpChannelTopic(userId);
         for (String otherUserId : otherUserIds) {
             String otherUserChannel = generateTopicName(otherUserId);
@@ -43,28 +44,31 @@ public class RedisPubSub {
         }
     }
 
-    public void unsubscribeFromChannel(String channelName) {
+    private void unsubscribeFromChannel(String channelName) {
         log.info("Unsubscribing from channel: {}", channelName);
         redisMessageListenerContainer.removeMessageListener(subscriber, new PatternTopic(channelName));
     }
 
 
     // Set up dynamic Pub/Sub for the user
-    public void setUpChannelTopic(String userId) {
+    private void setUpChannelTopic(String userId) {
         String topicName = generateTopicName(userId);
         ChannelTopic topic = new ChannelTopic(topicName);
-        log.info("Subscribed to my own topic: {}", topic.getTopic());
+        log.info("{} channel for redis created: {}", userId,topic.getTopic());
     }
 
 
     // Remove dynamic Pub/Sub for the user
-    public void removeChannelTopic(String userId) {
+    public void removeChannelTopic(String userId,Set<String> otherUserIds) {
         String topicName = generateTopicName(userId);
         ChannelTopic topic = new ChannelTopic(topicName);
-
+        log.info("Unsubscribed from topic: {}", topicName);
         // Remove the message listener from the container for the user topic
         redisMessageListenerContainer.removeMessageListener(listenerAdapter, topic);
-        log.info("Unsubscribed from topic: {}", topicName);
+        for (String otherUserId : otherUserIds) {
+            String otherUserChannel = generateTopicName(otherUserId);
+            unsubscribeFromChannel(otherUserChannel);
+        }
     }
 
     private String generateTopicName(String userId) {

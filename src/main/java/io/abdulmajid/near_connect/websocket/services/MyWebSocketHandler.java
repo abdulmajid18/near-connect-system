@@ -12,6 +12,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 
@@ -19,7 +20,7 @@ import java.util.concurrent.ExecutorService;
 @Component
 public class MyWebSocketHandler extends TextWebSocketHandler {
 
-
+    private final UserService userService;
     private final ObjectMapperUtils objectMapperUtils;
 
     private final LocationCache locationCache;
@@ -31,10 +32,10 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     private final ExecutorService executor;
 
     @Autowired
-    public MyWebSocketHandler(ObjectMapperUtils objectMapperUtils, LocationCache locationCache,
+    public MyWebSocketHandler(UserService userService, ObjectMapperUtils objectMapperUtils, LocationCache locationCache,
                               RabbitMQService rabbitMQService, RedisPubSub redisPubSub,
                               ExecutorService executor) {
-
+        this.userService = userService;
         this.objectMapperUtils = objectMapperUtils;
         this.locationCache = locationCache;
         this.rabbitMQService = rabbitMQService;
@@ -45,17 +46,18 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
         String userId = getUserIdFromSession(session);
-        redisPubSub.setUpChannelTopic(userId);
-        // user location to fetch users active friends and setup thier channels
+        Set<String> friends = userService.getFriends(userId);
+        redisPubSub.setupUserChannels(userId,friends);
     }
 
 
     @Override
     public void afterConnectionClosed(WebSocketSession session, CloseStatus status) throws Exception {
         String userId = getUserIdFromSession(session);
+        Set<String> friends = userService.getFriends(userId);
         log.info("Connection closed for userId: {} with status: {}", userId, status);
         locationCache.evictCache(userId);
-        redisPubSub.removeChannelTopic(userId);
+        redisPubSub.removeChannelTopic(userId,friends);
     }
 
     @Override
