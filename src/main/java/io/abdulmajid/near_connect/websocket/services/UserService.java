@@ -41,10 +41,9 @@ public class UserService {
         // Example users
         String amnuhu1 = "amnuhu1";
         String amnuhu2 = "amnuhu2";
-        String amnuhu3 = "amnuhu3";
 
         // Adding friendships
         addFriend(amnuhu1, amnuhu2);
-        addFriend(amnuhu1, amnuhu3);
+        addFriend(amnuhu2, amnuhu1);
     }
 }

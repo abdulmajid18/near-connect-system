@@ -11,8 +11,22 @@ public class RedisMessageSubscriber implements MessageListener {
 
     @Override
     public void onMessage(Message message, byte[] pattern) {
-        String channel = new String(pattern);
-        String receivedMessage = message.toString();
-        log.info("Redis Subscriber Received message: {} on channel: {}", receivedMessage, channel);
+        String fromChannel = new String(message.getChannel());
+        String toChannelPattern = new String(pattern);
+        String content = new String(message.getBody());
+
+        log.info("Message Received: \nFrom Channel: {} \nSubscribed Pattern: {} \nContent: {}",
+                fromChannel, toChannelPattern, content);
     }
+
+    public void owner(Message message, byte[] pattern) {
+        String fromChannel = new String(message.getChannel());
+        String toChannelPattern = new String(pattern);
+        String content = new String(message.getBody());
+
+        log.info("Owner Message Received: \nFrom Channel: {} \nSubscribed Pattern: {} \nContent: {}",
+                fromChannel, toChannelPattern, content);
+    }
+
+
 }
