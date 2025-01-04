@@ -76,7 +76,7 @@ public class MyWebSocketHandler extends TextWebSocketHandler {
                         locationCache.cacheLocation(loc.getUserId(), loc);
                         rabbitMQService.queueLocation(loc);
                         Optional<String> locationStr  = objectMapperUtils.serializeLocation(loc);
-                        locationStr.ifPresent(locStr -> redisPubSub.publishLocation(locStr, loc.getUserId()));
+                        locationStr.ifPresent(locStr -> redisPubSub.publishLocation(locStr, userService.getFriends(loc.getUserId())));
                         log.info("Location processed for userId: {}", loc.getUserId());
                     } catch (Exception e) {
                         log.error("Error processing location asynchronously: ", e);

@@ -20,7 +20,7 @@ public class RedisPubSubConfig {
 
     @Bean
     public MessageListenerAdapter listenerAdapter(RedisMessageSubscriber subscriber) {
-        return new MessageListenerAdapter(subscriber, "onMessage");
+        return new MessageListenerAdapter(subscriber);
     }
 
     @Bean

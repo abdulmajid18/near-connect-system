@@ -2,7 +2,6 @@ package io.abdulmajid.near_connect.websocket.services;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.data.redis.listener.PatternTopic;
 import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.listener.adapter.MessageListenerAdapter;
 import org.springframework.data.redis.listener.ChannelTopic;
@@ -21,13 +20,12 @@ public class RedisPubSub {
 
     private final RedisMessageListenerContainer redisMessageListenerContainer;
 
-
     private final RedisMessageSubscriber subscriber;
 
     private final Set<String> subscribedChannels = ConcurrentHashMap.newKeySet();
 
     public RedisPubSub(StringRedisTemplate redisTemplate, RedisMessageListenerContainer redisMessageListenerContainer,
-                       RedisMessageSubscriber subscriber) {
+                       MessageListenerAdapter listenerAdapter, RedisMessageSubscriber subscriber) {
         this.redisTemplate = redisTemplate;
         this.redisMessageListenerContainer = redisMessageListenerContainer;
         this.subscriber = subscriber;
@@ -93,13 +91,16 @@ public class RedisPubSub {
         return "user:" + userId + ":location";
     }
 
-    public void publishLocation(String location, String userId) {
-        String topicName = generateTopicName(userId);
-        try {
-            redisTemplate.convertAndSend(topicName, location);
-            log.info("Message published to my channel topic [{}]: {}", topicName, location);
-        } catch (Exception e) {
-            log.error("Failed to publish message to topic [{}]: {}", topicName, location, e);
+    public void publishLocation(String location, Collection<String> otherUserIds) {
+        for (String friend : otherUserIds) {
+            String topicName = generateTopicName(friend);
+            try {
+                // Publish the location message to the dynamically created channel
+                redisTemplate.convertAndSend(topicName, location);
+                log.info("Message published to channel topic [{}]: {}", topicName, location);
+            } catch (Exception e) {
+                log.error("Failed to publish message to topic [{}]: {}", topicName, location, e);
+            }
         }
     }
 
