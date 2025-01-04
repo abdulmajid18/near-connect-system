@@ -21,17 +21,15 @@ public class RedisPubSub {
 
     private final RedisMessageListenerContainer redisMessageListenerContainer;
 
-    private final MessageListenerAdapter listenerAdapter;
 
     private final RedisMessageSubscriber subscriber;
 
     private final Set<String> subscribedChannels = ConcurrentHashMap.newKeySet();
 
     public RedisPubSub(StringRedisTemplate redisTemplate, RedisMessageListenerContainer redisMessageListenerContainer,
-                       MessageListenerAdapter listenerAdapter, RedisMessageSubscriber subscriber, RedisMessageListenerContainer redisContainer) {
+                       RedisMessageSubscriber subscriber) {
         this.redisTemplate = redisTemplate;
         this.redisMessageListenerContainer = redisMessageListenerContainer;
-        this.listenerAdapter = listenerAdapter;
         this.subscriber = subscriber;
     }
 
