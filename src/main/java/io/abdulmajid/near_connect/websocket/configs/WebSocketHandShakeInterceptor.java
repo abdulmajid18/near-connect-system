@@ -1,5 +1,6 @@
 package io.abdulmajid.near_connect.websocket.configs;
 
+import io.abdulmajid.near_connect.websocket.context.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.server.ServerHttpRequest;
 import org.springframework.http.server.ServerHttpResponse;
@@ -14,6 +15,11 @@ import java.util.Map;
 @Component
 public class WebSocketHandShakeInterceptor implements HandshakeInterceptor {
 
+    private final UserContext userContext;
+
+    public WebSocketHandShakeInterceptor(UserContext userContext) {
+        this.userContext = userContext;
+    }
 
     @Override
     public boolean beforeHandshake(ServerHttpRequest request, ServerHttpResponse response, WebSocketHandler wsHandler, Map<String, Object> attributes) throws Exception {
@@ -28,6 +34,7 @@ public class WebSocketHandShakeInterceptor implements HandshakeInterceptor {
             String userId = getQueryParam(query, "userId");
             if (userId != null) {
                 attributes.put("userId", userId);
+                userContext.setUserId(userId);
                 log.info("Handshake initiated. User-ID from query parameter: {}", userId);
             } else {
                 log.warn("User-ID not found in query parameters.");
