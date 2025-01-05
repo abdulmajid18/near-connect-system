@@ -25,7 +25,7 @@ public class RedisPubSub {
     private final Set<String> subscribedChannels = ConcurrentHashMap.newKeySet();
 
     public RedisPubSub(StringRedisTemplate redisTemplate, RedisMessageListenerContainer redisMessageListenerContainer,
-                       MessageListenerAdapter listenerAdapter, RedisMessageSubscriber subscriber) {
+                       RedisMessageSubscriber subscriber) {
         this.redisTemplate = redisTemplate;
         this.redisMessageListenerContainer = redisMessageListenerContainer;
         this.subscriber = subscriber;
